@@ -26,11 +26,12 @@ func parseFile(f string) {
 	z := html.NewTokenizer(content)
 
 	isTitle := false
+	isContent := false
 
 	for {
 		tt := z.Next()
 
-		fmt.Printf("%s\n", tt.String())
+		//fmt.Printf("%s\n", tt.String())
 
 		switch {
 		case tt == html.ErrorToken:
@@ -39,37 +40,49 @@ func parseFile(f string) {
 		case tt == html.StartTagToken:
 			t := z.Token()
 
-			// Check if the token is an <a> tag
-			isTitle = t.Data == "h1"
-			fmt.Println("found h1")
-			if !isTitle {
-				continue
-			}
+			isTitle = isTitleFunc(t)
+			//fmt.Printf("%s\n", t.Data)
 
-			// Extract the title value, if there is one
-			//ok, title := getTitle(t)
-			//if !ok {
-			//	continue
-			//}
+			isContent = isContentFunc(t)
 
 		case tt == html.TextToken:
-			fmt.Printf("TTesttoken: %b\n", isTitle)
+			//fmt.Printf("TTesttoken: %b\n", isTitle)
 			if isTitle {
 				t := z.Token()
 				fmt.Println("Title: " + t.String())
 				isTitle = false
-
+			} else if isContent {
+				//t := z.Token()
+				fmt.Println("Content: " + tt.String())
+				isContent = false
 			}
 		}
 	}
 
 }
 
-// Helper function to pull the href attribute from a Token
-func getTitle(t html.Token) (ok bool, title string) {
-	// Iterate over all of the Token's attributes until we find an "href"
+func isTitleFunc(t html.Token) (ok bool) {
+	if t.Data != "h1" {
+		return false
+	}
+	for _, a := range t.Attr {
+		//fmt.Printf("Val: %s\n", a.Val)
+		if a.Val == "entry-title" {
+			return true
+		}
+	}
+	return false
+}
 
-	title = t.Data
-	ok = true
-	return
+func isContentFunc(t html.Token) (ok bool) {
+	if t.Data != "div" {
+		return false
+	}
+	for _, a := range t.Attr {
+		//fmt.Printf("Val: %s\n", a.Val)
+		if a.Val == "entry-content" {
+			return true
+		}
+	}
+	return false
 }
